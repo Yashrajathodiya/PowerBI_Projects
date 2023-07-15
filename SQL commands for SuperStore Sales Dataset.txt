@@ -1,0 +1,186 @@
+SuperStores Sales analysis Sql:
+
+1.) To create Table: 
+    Step-1: make sure the column name of excel file is same as the table one to import data into it.
+    Step-2: convert excel file into csv file, if you already has csv file then no problem.
+
+**IMPORTANT: make sure datess are in yyyy-mm-dd format, otherwise it will not work or gives error if in dd-mm-yyyy, & also in date format not in numerical or alphabnumeric format(23-July-2023). 
+
+Query : 
+
+CREATE TABLE store_analysis (
+  "Row ID" INT PRIMARY KEY,
+  "Order ID" VARCHAR(50),
+  "Order Date" DATE,
+  "Ship Date" DATE,
+  "Ship Mode" VARCHAR(50),
+  "Customer ID" VARCHAR(50),
+  "Customer Name" VARCHAR(100),
+  "Segment" VARCHAR(50),
+  "Country" VARCHAR(50),
+  "City" VARCHAR(50),
+  "State" VARCHAR(50),
+  "Region" VARCHAR(50),
+  "Product ID" VARCHAR(50),
+  "Category" VARCHAR(50),
+  "Sub-Category" VARCHAR(50),
+  "Product Name" VARCHAR(350),
+  "Sales" DECIMAL(12, 5),
+  "Quantity" INT,
+  "Profit" DECIMAL(12, 5),
+  "Returns" INT,
+  "Payment Mode" VARCHAR(50)
+);
+
+    Step-3: to check that it is created you can write 
+        SELECT * FROM store_analysis;
+-------------------
+
+2.) once table is created go to the options in import/export, i am using PostgreSQL, so you find this option by right click on table tab.
+there 
+    i) add path where csv file is located
+    ii) then on next tab move slider to include header also 
+    iii) then in third tab check the column name and click OK.
+
+3.) if everything is fine you data and your steps then a good to go.
+
+----------------------------------------------------------------
+
+4.) now questions you asked, "In month of july , sum of profits is negative in 2020, it had made significant profits. so which, product has lead to this?"
+
+Query: 
+    SELECT "Product Name", SUM("Profit") AS TotalProfit
+    FROM store_anal
+    WHERE EXTRACT(YEAR FROM "Order Date") = 2020
+        AND EXTRACT(MONTH FROM "Order Date") = 7
+    GROUP BY "Product Name"
+    HAVING SUM("Profit") < 0
+    ORDER BY TotalProfit ASC;
+
+Answer : Chromcraft 48" x 96" Racetrack Double Pedestal Table | -448.89600 ...
+
+----------------------------------------------------------------
+
+
+5.)  Similar Question is for november but there is much significant product ? so, the product that has lead to this has further details: 
+    a) what was in order ID? 
+    b) in which part of country was it dominantly sold? 
+    c) what was the category of the product 
+    d) list of customers who had purchassed it?
+
+Query:
+--a)
+    SELECT "Order ID"
+    FROM store_anal
+    WHERE EXTRACT(MONTH FROM "Order Date") = 11
+    ORDER BY "Profit" DESC
+    LIMIT 1;
+
+Answer :  CA-2020-166709
+
+
+--b)
+    SELECT "State"
+    FROM store_anal
+    WHERE EXTRACT(MONTH FROM "Order Date") = 11
+    GROUP BY "State"
+    ORDER BY SUM("Profit") DESC
+    LIMIT 1;
+
+Answer : New York
+
+--c)
+    SELECT "Category"
+    FROM store_anal
+    WHERE EXTRACT(MONTH FROM "Order Date") = 11
+    GROUP BY "Category"
+    ORDER BY SUM("Profit") DESC
+    LIMIT 1;
+
+Answer : Office Supplies
+
+--d)
+    SELECT DISTINCT "Customer Name"
+    FROM store_anal
+    WHERE EXTRACT(MONTH FROM "Order Date") = 11
+    ORDER BY "Customer Name";
+
+Answer : Aaron Bergman ...
+
+----------------------------------------------------------------
+
+6.) Amongst the forcasted sales, on which day can we achieve maximum profit and it is due to which product?
+
+Query: 
+    SELECT
+    "Order Date",
+    "Product Name",
+    SUM("Profit") AS TotalProfit
+    FROM
+    store_anal
+    WHERE
+    "Order Date" IN (
+        SELECT DISTINCT "Order Date" FROM store_anal -- Replace with your forecasted sales query
+    )
+    GROUP BY
+    "Order Date",
+    "Product Name"
+    ORDER BY
+    TotalProfit DESC
+    LIMIT 1;
+
+Answer : 2019-10-02 | Canon imageCLASS 2200 Advanced Copier | 8399.97600 ...
+
+----------------------------------------------------------------
+
+7.) out of all dates on which day we have maximum sales & on which day we had minimum?
+
+Query for maximum:
+    SELECT
+    "Order Date",
+    SUM("Sales") AS TotalSales
+    FROM
+    store_anal
+    GROUP BY
+    "Order Date"
+    ORDER BY
+    TotalSales DESC
+    LIMIT 1;
+
+Answer for maximum: 2020-09-02 | 11778.85400
+
+Query for minimum:
+    SELECT
+    "Order Date",
+    SUM("Sales") AS TotalSales
+    FROM
+    store_anal
+    GROUP BY
+    "Order Date"
+    ORDER BY
+    TotalSales ASC
+    LIMIT 1;
+
+Answer for minimum: 2019-05-11 | 5.98000
+
+----------------------------------------------------------------
+
+8.) which state has made the max profit & how much?
+
+Query: 
+    SELECT
+    "State",
+    SUM("Profit") AS TotalProfit
+    FROM
+    store_anal
+    GROUP BY
+    "State"
+    ORDER BY
+    TotalProfit DESC
+    LIMIT 1;
+
+Answer: California | 49372.17500
+
+# So this is it, Thank you.
+
+----------------------------------------------------------------
